@@ -5,6 +5,9 @@ using TodoApi.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// WebApplication.CreateBuilder(args) の直後に追加
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.local.json", optional: true, reloadOnChange: true);
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
