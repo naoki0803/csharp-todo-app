@@ -116,6 +116,133 @@ backend/
 
 この構造により、テスト容易性、保守性、拡張性を持つ堅牢なアプリケーションが実現されています。ドメインロジックとインフラストラクチャの分離が明確で、ビジネスルールの表現が優れています。
 
+## DDD アーキテクチャに基づく CRUD 操作のデータフロー図
+
+各 CRUD 操作におけるデータの流れを、DDD の各レイヤーを中心とした視点でのデータフロー図を以下に示します。これにより、DDD アーキテクチャでのデータのライフサイクルと各レイヤーの責任範囲が明確になります。
+
+### 新規 Todo の作成（Create）- DDD 視点
+
+```mermaid
+sequenceDiagram
+    participant P as プレゼンテーション層<br/>(TodoForm.tsx, TodosController.cs)
+    participant A as アプリケーション層<br/>(TodoService.cs)
+    participant D as ドメイン層<br/>(Todo.cs)
+    participant I as インフラストラクチャ層<br/>(SupabaseTodoRepository.cs)
+
+    P->>P: 1. ユーザー入力を受け付け<br/>(frontend/src/components/TodoForm.tsx)
+    P->>P: 2. APIリクエスト<br/>(frontend/src/lib/api-client.ts)
+    P->>A: 3. CreateTodoAsync呼び出し<br/>(backend/Presentation/Controllers/TodosController.cs)
+    A->>A: 4. 入力検証<br/>(backend/Application/Services/TodoService.cs)
+    A->>D: 5. ドメインエンティティ作成<br/>(backend/Application/Services/TodoService.cs)
+    D->>D: 6. Todo.Create()<br/>ビジネスルール適用<br/>(backend/Domain/Entities/Todo.cs)
+    D-->>A: 7. 作成されたエンティティ
+    A->>I: 8. AddAsync()<br/>(backend/Application/Services/TodoService.cs)
+    I->>I: 9. データ永続化<br/>(backend/Infrastructure/Repositories/SupabaseTodoRepository.cs)
+    I-->>A: 10. 保存結果
+    A->>A: 11. DTOへの変換<br/>(backend/Application/Services/TodoService.cs)
+    A-->>P: 12. TodoDtoを返却
+    P->>P: 13. UI更新<br/>(frontend/src/components/TodoList.tsx)
+```
+
+### Todo リストの取得（Read）- DDD 視点
+
+```mermaid
+sequenceDiagram
+    participant P as プレゼンテーション層<br/>(TodoList.tsx, TodosController.cs)
+    participant A as アプリケーション層<br/>(TodoService.cs)
+    participant D as ドメイン層<br/>(Todo.cs)
+    participant I as インフラストラクチャ層<br/>(SupabaseTodoRepository.cs)
+
+    P->>P: 1. リスト表示リクエスト<br/>(frontend/src/components/TodoList.tsx)
+    P->>A: 2. GetAllTodosAsync呼び出し<br/>(backend/Presentation/Controllers/TodosController.cs)
+    A->>I: 3. GetAllAsync()<br/>(backend/Application/Services/TodoService.cs)
+    I->>I: 4. データ取得<br/>(backend/Infrastructure/Repositories/SupabaseTodoRepository.cs)
+    I-->>A: 5. Todoエンティティリスト
+    A->>A: 6. エンティティ→DTO変換<br/>(backend/Application/Services/TodoService.cs)
+    A-->>P: 7. TodoDto[]を返却
+    P->>P: 8. リストをUIに表示<br/>(frontend/src/components/TodoList.tsx)
+```
+
+### Todo の更新（Update）- DDD 視点
+
+```mermaid
+sequenceDiagram
+    participant P as プレゼンテーション層<br/>(TodoItem.tsx, TodosController.cs)
+    participant A as アプリケーション層<br/>(TodoService.cs)
+    participant D as ドメイン層<br/>(Todo.cs)
+    participant I as インフラストラクチャ層<br/>(SupabaseTodoRepository.cs)
+
+    P->>P: 1. 更新リクエスト<br/>(frontend/src/components/TodoItem.tsx)
+    P->>A: 2. UpdateTodoAsync/ToggleTodoCompletionAsync<br/>(backend/Presentation/Controllers/TodosController.cs)
+    A->>I: 3. GetByIdAsync()<br/>(backend/Application/Services/TodoService.cs)
+    I-->>A: 4. 既存Todoエンティティ
+    A->>D: 5. ドメインメソッド呼び出し<br/>(backend/Application/Services/TodoService.cs)
+    D->>D: 6. ChangeTitle/ToggleCompletion<br/>(backend/Domain/Entities/Todo.cs)
+    D-->>A: 7. 更新されたエンティティ
+    A->>I: 8. UpdateAsync()<br/>(backend/Application/Services/TodoService.cs)
+    I->>I: 9. データ更新<br/>(backend/Infrastructure/Repositories/SupabaseTodoRepository.cs)
+    I-->>A: 10. 更新結果
+    A-->>P: 11. 成功ステータス
+    P->>P: 12. UI状態更新<br/>(frontend/src/components/TodoItem.tsx)
+```
+
+### Todo の削除（Delete）- DDD 視点
+
+```mermaid
+sequenceDiagram
+    participant P as プレゼンテーション層<br/>(TodoItem.tsx, TodosController.cs)
+    participant A as アプリケーション層<br/>(TodoService.cs)
+    participant D as ドメイン層<br/>(Todo.cs)
+    participant I as インフラストラクチャ層<br/>(SupabaseTodoRepository.cs)
+
+    P->>P: 1. 削除リクエスト<br/>(frontend/src/components/TodoItem.tsx)
+    P->>A: 2. DeleteTodoAsync<br/>(backend/Presentation/Controllers/TodosController.cs)
+    A->>I: 3. DeleteAsync()<br/>(backend/Application/Services/TodoService.cs)
+    I->>I: 4. データ削除<br/>(backend/Infrastructure/Repositories/SupabaseTodoRepository.cs)
+    I-->>A: 5. 削除結果
+    A-->>P: 6. 成功ステータス
+    P->>P: 7. UIからアイテム削除<br/>(frontend/src/components/TodoList.tsx)
+```
+
+### DDD レイヤー別の責任
+
+1. **プレゼンテーション層**
+
+    - ユーザーインターフェースとの対話
+    - API リクエスト/レスポンスの処理
+    - データの表示フォーマット
+    - **ファイル**: `TodosController.cs`, フロントエンドコンポーネント
+
+2. **アプリケーション層**
+
+    - ユースケースのオーケストレーション
+    - 入力検証とビジネスルールの適用
+    - トランザクション管理
+    - ドメインオブジェクトと DTO の変換
+    - **ファイル**: `TodoService.cs`, DTO クラス
+
+3. **ドメイン層**
+
+    - ビジネスロジックの中核
+    - エンティティとその振る舞い
+    - 不変条件の実装
+    - 値オブジェクト
+    - **ファイル**: `Todo.cs`エンティティ
+
+4. **インフラストラクチャ層**
+    - データアクセス
+    - 外部サービス連携
+    - 永続化
+    - キャッシュなどの技術的関心事
+    - **ファイル**: `SupabaseTodoRepository.cs`
+
+### レイヤー間の依存関係
+
+-   ドメイン層は他のどのレイヤーにも依存しない（内側レイヤー）
+-   アプリケーション層はドメイン層に依存する
+-   プレゼンテーション層はアプリケーション層とドメイン層に依存する
+-   インフラストラクチャ層はアプリケーション層とドメイン層に依存する（依存性逆転の原則）
+
 ## セットアップ手順
 
 ### 前提条件
