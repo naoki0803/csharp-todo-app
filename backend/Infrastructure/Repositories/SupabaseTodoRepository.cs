@@ -154,7 +154,8 @@ namespace TodoApi.Infrastructure.Repositories
                 // レコードを更新
                 await _supabaseClient
                     .From<TodoRecord>()
-                    .Where(t => t.Id == todo.Id.ToString())
+                    // .Where(t => t.Id == todo.Id.ToString())  // Postgrestのラムダ式処理でEqualsメソッドがサポートされておらずエラー
+                    .Filter("id", Postgrest.Constants.Operator.Equals, todo.Id.ToString())
                     .Update(todoRecord);
 
                 return true;
