@@ -173,6 +173,7 @@ namespace TodoApi.Infrastructure.Repositories
         /// <returns>削除が成功したかどうか</returns>
         public async Task<bool> DeleteAsync(Guid id)
         {
+            Console.WriteLine($"DeleteAsync: ID={id}の削除を試行");
             try
             {
                 // IDでTodoを削除

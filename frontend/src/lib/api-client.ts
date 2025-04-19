@@ -109,6 +109,7 @@ export const todoApi = {
    * Todoを削除
    */
   async delete(id: string): Promise<void> {
+    console.log('delete', id);
     const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
       method: 'DELETE',
     });
