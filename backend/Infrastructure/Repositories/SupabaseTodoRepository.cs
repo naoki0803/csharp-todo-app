@@ -179,7 +179,8 @@ namespace TodoApi.Infrastructure.Repositories
                 // IDでTodoを削除
                 await _supabaseClient
                     .From<TodoRecord>()
-                    .Where(t => t.Id == id.ToString())
+                    // .Where(t => t.Id == id.ToString())   // Postgrestのラムダ式処理でEqualsメソッドがサポートされておらずエラー
+                    .Filter("id", Postgrest.Constants.Operator.Equals, id.ToString())
                     .Delete();
 
                 return true;
