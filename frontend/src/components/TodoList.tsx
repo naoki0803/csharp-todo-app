@@ -51,7 +51,6 @@ export default function TodoList() {
   const handleAddTodo = async (title: string) => {
     try {
       const newTodo = await todoApi.create({ title });
-      console.log("🚀 ~ handleAddTodo ~ newTodo:", newTodo)
       setTodos(prevTodos => [newTodo, ...prevTodos]);
       toast.success('Todoを追加しました');
     } catch (err) {

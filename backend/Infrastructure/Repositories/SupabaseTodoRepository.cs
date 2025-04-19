@@ -60,8 +60,6 @@ namespace TodoApi.Infrastructure.Repositories
         {
             try
             {
-                Console.WriteLine($"GetByIdAsync: ID={id}の取得を試行");
-
                 // Single()ではなくGet()を使用し、フィルタリングする
                 var response = await _supabaseClient
                     .From<TodoRecord>()
@@ -79,8 +77,6 @@ namespace TodoApi.Infrastructure.Repositories
                     Console.WriteLine("GetByIdAsync: アイテムが見つかりませんでした");
                     return null;
                 }
-
-                Console.WriteLine($"GetByIdAsync: アイテム取得 - Title: {todoRecord.Title}");
                 return MapToDomainEntity(todoRecord);
             }
             catch (Exception ex)
@@ -174,7 +170,6 @@ namespace TodoApi.Infrastructure.Repositories
         /// <returns>削除が成功したかどうか</returns>
         public async Task<bool> DeleteAsync(Guid id)
         {
-            Console.WriteLine($"DeleteAsync: ID={id}の削除を試行");
             try
             {
                 // IDでTodoを削除
