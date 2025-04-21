@@ -200,6 +200,86 @@ frontend/src/
 -   プレゼンテーション層はアプリケーション層とドメイン層に依存する
 -   インフラストラクチャ層はアプリケーション層とドメイン層に依存する（依存性逆転の原則）
 
+この構造により、テスト容易性、保守性、拡張性を持つ堅牢なアプリケーションが実現されています。ドメインロジックとインフラストラクチャの分離が明確で、ビジネスルールの表現が優れています。
+
+### 依存関係逆転の原則（DIP）の実装箇所
+
+このプロジェクトでは依存関係逆転の原則が以下の箇所で明確に表現されています：
+
+1. **ドメイン層でのインターフェース定義**
+
+    - `backend/Domain/Repositories/ITodoRepository.cs` でリポジトリのインターフェースを定義
+    - このインターフェースはドメイン層（内側のレイヤー）に属している
+
+    ```csharp
+    namespace TodoApi.Domain.Repositories
+    {
+        public interface ITodoRepository
+        {
+            Task<List<Todo>> GetAllAsync();
+            Task<Todo> GetByIdAsync(Guid id);
+            Task<Guid> AddAsync(Todo todo);
+            Task<bool> UpdateAsync(Todo todo);
+            Task<bool> DeleteAsync(Guid id);
+        }
+    }
+    ```
+
+2. **インフラストラクチャ層での実装**
+
+    - `backend/Infrastructure/Repositories/SupabaseTodoRepository.cs` でインターフェースの実装を提供
+    - 低レベルのインフラ層がドメイン層（高レベル）で定義されたインターフェースに依存する形になっている
+
+    ```csharp
+    namespace TodoApi.Infrastructure.Repositories
+    {
+        public class SupabaseTodoRepository : ITodoRepository
+        {
+            private readonly Client _supabaseClient;
+
+            public SupabaseTodoRepository(Client supabaseClient)
+            {
+                _supabaseClient = supabaseClient ?? throw new ArgumentNullException(nameof(supabaseClient));
+            }
+
+            public async Task<List<Todo>> GetAllAsync()
+            {
+                // Supabaseからデータ取得の実装
+                // ...
+            }
+
+            public async Task<Todo> GetByIdAsync(Guid id)
+            {
+                // Supabaseから特定IDのデータ取得の実装
+                // ...
+            }
+
+            // 他のメソッド実装...
+        }
+    }
+    ```
+
+3. **アプリケーション層でのインターフェース利用**
+
+    - `TodoService` が具体的な実装ではなく `ITodoRepository` インターフェースを参照
+
+    ```csharp
+    private readonly ITodoRepository _todoRepository;
+
+    public TodoService(ITodoRepository todoRepository)
+    {
+        _todoRepository = todoRepository ?? throw new ArgumentNullException(nameof(todoRepository));
+    }
+    ```
+
+4. **DI コンテナでの依存関係登録**
+    - `Program.cs` でインターフェースと実装の関連付けを行っている
+    ```csharp
+    builder.Services.AddScoped<ITodoRepository, SupabaseTodoRepository>();
+    ```
+
+この設計により、ドメイン層はデータアクセスの実装詳細に依存せず、将来的にデータアクセス方法が変わっても（例：別のデータベースに変更）ドメイン層のコードに影響を与えずに対応できる柔軟性を実現しています。
+
 ## DDD アーキテクチャに基づく CRUD 操作のデータフロー図
 
 各 CRUD 操作におけるデータの流れを、DDD の各レイヤーを中心とした視点でのデータフロー図を以下に示します。これにより、DDD アーキテクチャでのデータのライフサイクルと各レイヤーの責任範囲が明確になります。
