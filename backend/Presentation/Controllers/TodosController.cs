@@ -12,6 +12,12 @@ namespace TodoApi.Presentation.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
+    /*
+    [Route("api/[controller]")] は、URLルーティング（アクセスパス）を指定する属性です。
+    "api/[controller]" という書き方は、[controller] の部分がクラス名（"Controller"を除いた部分）に自動で置き換わります。
+    例：クラス名が TodosController なら、[controller] は todos になります（大文字小文字は自動で調整される）。
+    つまり、このコントローラーは /api/todos というURLでアクセスできるという意味です。
+    */
     public class TodosController : ControllerBase
     {
         private readonly TodoService _todoService;
